@@ -124,16 +124,16 @@ impl GzHeaderParser {
                     }
                     // Gzip identification bytes
                     if buffer[0] != 0x1f || buffer[1] != 0x8b {
-                        return Err(bad_header());
+                        return Err(bad_header(buffer));
                     }
                     // Gzip compression method (8 = deflate)
                     if buffer[2] != 8 {
-                        return Err(bad_header());
+                        return Err(bad_header(buffer));
                     }
                     self.flags = buffer[3];
                     // RFC1952: "must give an error indication if any reserved bit is non-zero"
                     if self.flags & FRESERVED != 0 {
-                        return Err(bad_header());
+                        return Err(bad_header(buffer));
                     }
                     self.header.mtime = ((buffer[4] as u32) << 0)
                         | ((buffer[5] as u32) << 8)
@@ -275,8 +275,9 @@ fn parse_le_u16(buffer: &[u8; 2]) -> u16 {
     (buffer[0] as u16) | ((buffer[1] as u16) << 8)
 }
 
-fn bad_header() -> Error {
-    Error::new(ErrorKind::InvalidInput, "invalid gzip header")
+fn bad_header(header: &[u8]) -> Error {
+    let msg = format!("invalid gzip header: {:?}", header);
+    Error::new(ErrorKind::InvalidInput, msg)
 }
 
 fn corrupt() -> Error {
@@ -457,7 +458,7 @@ impl GzBuilder {
 mod tests {
     use std::io::prelude::*;
 
-    use super::{read, write, GzBuilder};
+    use super::{read, write, GzBuilder, GzHeaderParser};
     use crate::Compression;
     use rand::{thread_rng, Rng};
 
@@ -556,5 +557,15 @@ mod tests {
         let mut f = write::GzEncoder::new(Vec::new(), Compression::default());
         write!(f, "Hello world").unwrap();
         f.flush().unwrap();
+    }
+
+    // Invalid header error shows the 10 bytes of the header
+    #[test]
+    fn bad_header() {
+        let mut parser = GzHeaderParser::new();
+        let mut bad_header = &b"0123456789abc"[..];
+        let err = parser.parse(&mut bad_header).unwrap_err();
+        assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+        assert_eq!(err.to_string(), "invalid gzip header: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57]");
     }
 }
