@@ -147,12 +147,9 @@ where
                 continue
             }
             Ok(Status::Ok) | Ok(Status::BufError) | Ok(Status::StreamEnd) => return Ok(read),
-
-            Err(..) => {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidInput,
-                    "corrupt deflate stream",
-                ))
+            Err(e) => {
+                let msg = format!("corrupt deflate stream: {:?}", e);
+                return Err(io::Error::new(io::ErrorKind::InvalidInput, msg));
             }
         }
     }
@@ -227,10 +224,15 @@ impl<W: Write, D: Ops> Writer<W, D> {
                 Ok(st) => match st {
                     Status::Ok | Status::BufError | Status::StreamEnd => Ok((written, st)),
                 },
-                Err(..) => Err(io::Error::new(
-                    io::ErrorKind::InvalidInput,
-                    "corrupt deflate stream",
-                )),
+                Err(e) => {
+                    let msg = format!(
+                        "corrupt deflate stream: {:?}, data at {}={:?}",
+                        e,
+                        self.data.total_in(),
+                        buf.chunks(10).next()
+                    );
+                    Err(io::Error::new(io::ErrorKind::InvalidInput, msg))
+                }
             };
         }
     }
