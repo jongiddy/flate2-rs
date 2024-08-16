@@ -7,8 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # I don't really understand the build matrix here...
-        build: [stable, beta, nightly, macos, windows, mingw]
+        build: [stable, beta, nightly, minimal, macos, windows, mingw]
         include:
           - build: stable
             os: ubuntu-latest
@@ -19,6 +18,9 @@ jobs:
           - build: nightly
             os: ubuntu-latest
             rust: nightly
+          - build: minimal
+            os: ubuntu-latest
+            rust: 1.56.1
           - build: macos
             os: macos-latest
             rust: stable
@@ -48,11 +50,11 @@ jobs:
     - run: cargo test --features cloudflare_zlib --no-default-features
       if: matrix.build != 'mingw'
     - run: |
-        if ! cargo check --no-default-features 2>&1 | grep "You need to choose"; then 
+        if ! cargo check --no-default-features 2>&1 | grep "You need to choose"; then
           echo "expected message stating a zlib backend must be chosen"
           exit 1
         fi
-      if: matrix.build == 'stable' 
+      if: matrix.build == 'stable'
 
   rustfmt:
     name: Rustfmt & Docs

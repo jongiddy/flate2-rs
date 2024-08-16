@@ -23,9 +23,18 @@ flate2 = "1.0"
 
 ## MSRV (Minimum Supported Rust Version) Policy
 
-This crate supports the current stable and the last stable for the latest version.
+This crate supports the current stable and the last stable compiler for the latest version.
 For example, if the current stable is 1.64, this crate supports 1.64 and 1.63.
 Older stables may work, but we don't guarantee these will continue to work.
+
+The `Cargo.toml` file specifies a minimum version for which builds passed at some point.
+This value is indicative only, and may change at any time.
+
+The minimum version is a best-effort measured value and is different to the MSRV
+which is a support guarantee. The minimum version can be incremented by a PR in order
+to pass tests, as long as the MSRV holds. When the minimum version increases, the next
+release should be a minor version, to allow any affected users to pin to a previous
+minor version.
 
 ## Compression
 
