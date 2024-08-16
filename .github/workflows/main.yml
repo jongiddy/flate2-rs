@@ -18,9 +18,6 @@ jobs:
           - build: nightly
             os: ubuntu-latest
             rust: nightly
-          - build: minimal
-            os: ubuntu-latest
-            rust: 1.56.1
           - build: macos
             os: macos-latest
             rust: stable
@@ -77,3 +74,16 @@ jobs:
     - name: Install Rust
       run: rustup update stable && rustup default stable && rustup target add ${{ matrix.target }}
     - run: cargo build --target ${{ matrix.target }}
+
+  minimum:
+    name: Minimum Rust compiler
+    runs-on: ubuntu-latest
+    env:
+      # If this is changed to pass tests, then set `rust-version` in `Cargo.toml` to the same version.
+      version: 1.56.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust (rustup)
+        run: rustup update ${version} --no-self-update && rustup default ${version}
+        shell: bash
+      - run: cargo build
